@@ -1,5 +1,5 @@
 /**
- * Parser for $variable and &function syntax in prompts.
+ * Parser for $`variable` and &`function` syntax in prompts.
  */
 
 export interface ParsedPrompt {
@@ -10,16 +10,15 @@ export interface ParsedPrompt {
 /**
  * Parse a prompt to extract variable and function references.
  * 
- * - $variableName references a kernel variable
- * - &functionName makes a function available as an AI tool
+ * - $`variableName` references a kernel variable
+ * - &`functionName` makes a function available as an AI tool
  */
 export function parsePrompt(text: string): ParsedPrompt {
-  // Match $variableName (word characters after $)
-  const variablePattern = /\$([a-zA-Z_][a-zA-Z0-9_]*)/g;
+  // Match $`variableName` (word characters inside backticks after $)
+  const variablePattern = /\$`([a-zA-Z_][a-zA-Z0-9_]*)`/g;
   
-  // Match &functionName (word characters after &, but not when & is part of a word)
-  // Uses negative lookbehind to ensure & is not preceded by a word character
-  const functionPattern = /(?<!\w)&([a-zA-Z_][a-zA-Z0-9_]*)/g;
+  // Match &`functionName` (word characters inside backticks after &)
+  const functionPattern = /&`([a-zA-Z_][a-zA-Z0-9_]*)`/g;
 
   const variables: string[] = [];
   const functions: string[] = [];
@@ -59,7 +58,7 @@ export function substituteVariables(
   let result = text;
   
   for (const [name, value] of Object.entries(variableValues)) {
-    const pattern = new RegExp(`\\$${name}\\b`, 'g');
+    const pattern = new RegExp(`\\$\`${name}\``, 'g');
     // Use replacer function to avoid interpreting $& etc. in value
     result = result.replace(pattern, () => value);
   }
@@ -74,7 +73,7 @@ export function substituteVariables(
  */
 export function removeFunctionReferences(text: string): string {
   return text
-    .replace(/(?<!\w)&([a-zA-Z_][a-zA-Z0-9_]*)/g, '')
+    .replace(/&`([a-zA-Z_][a-zA-Z0-9_]*)`/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }

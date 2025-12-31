@@ -2,7 +2,7 @@
 
 ## Overview
 
-ai-jup is a JupyterLab extension that adds AI-powered prompt cells with `$variable` and `&function` syntax. It has:
+ai-jup is a JupyterLab extension that adds AI-powered prompt cells with `` $`variable` `` and `` &`function` `` syntax. It has:
 - **TypeScript frontend** (`src/`) - JupyterLab extension code
 - **Python backend** (`ai_jup/`) - Tornado handlers for Anthropic API + kernel execution
 

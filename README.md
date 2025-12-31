@@ -8,8 +8,8 @@ A JupyterLab extension that adds AI-powered prompt cells with special syntax for
 
 ## Features
 
-- **`$variable`** - Reference kernel variables in prompts (values substituted automatically)
-- **`&function`** - Expose Python functions as AI-callable tools
+- **`` $`variable` ``** - Reference kernel variables in prompts (values substituted automatically)
+- **`` &`function` ``** - Expose Python functions as AI-callable tools
 - **Streaming responses** - Real-time SSE streaming from Anthropic's Claude
 - **Full context** - AI sees all preceding code cells and kernel state
 - **Tool loop** - AI can call multiple tools in sequence to complete tasks
@@ -70,16 +70,16 @@ data = [1, 2, 3, 4, 5]
 Then in a prompt cell:
 
 ```markdown
-**AI Prompt:** What is the sum of $data?
+What is the sum of $`data`?
 ```
 
 Press `Cmd/Ctrl + Shift + Enter` to execute.
 
 ## Syntax
 
-### `$variable` - Reference Variables
+### `` $`variable` `` - Reference Variables
 
-Use `$variable_name` to inject the current value of any Python variable into your prompt:
+Use `` $`variable_name` `` to inject the current value of any Python variable into your prompt:
 
 ```python
 # In a code cell
@@ -90,14 +90,14 @@ sales_data = [
 ```
 
 ```markdown
-**AI Prompt:** Given $sales_data, which product has the highest revenue?
+Given $`sales_data`, which product has the highest revenue?
 ```
 
 The AI sees the actual data and can provide specific analysis.
 
-### `&function` - Expose Functions as Tools
+### `` &`function` `` - Expose Functions as Tools
 
-Use `&function_name` to let the AI call Python functions during its response:
+Use `` &`function_name` `` to let the AI call Python functions during its response:
 
 ```python
 # In a code cell
@@ -111,7 +111,7 @@ def top_seller(data: list) -> dict:
 ```
 
 ```markdown
-**AI Prompt:** Use &calculate_revenue and &top_seller to analyze $sales_data.
+Use &`calculate_revenue` and &`top_seller` to analyze $`sales_data`.
 ```
 
 The AI can call these functions, see the results, and incorporate them into its response.
@@ -144,8 +144,8 @@ from fastcore.tools import view, rg
 ```
 
 ```markdown
-**AI Prompt:** Use &view to explore $repo_path and tell me what this library does.
-Then use &rg to find all decorator definitions.
+Use &`view` to explore $`repo_path` and tell me what this library does.
+Then use &`rg` to find all decorator definitions.
 ```
 
 The AI will:
@@ -165,8 +165,8 @@ Prompt cells are markdown cells with special metadata (`ai_jup.isPromptCell: tru
 When you execute a prompt cell, ai-jup:
 
 1. **Collects preceding code** - All code cells above the prompt are gathered
-2. **Resolves `$variables`** - Queries the kernel for each variable's type and repr
-3. **Gathers `&function` metadata** - Gets signatures, docstrings, and parameter info
+2. **Resolves `` $`variables` ``** - Queries the kernel for each variable's type and repr
+3. **Gathers `` &`function` `` metadata** - Gets signatures, docstrings, and parameter info
 4. **Builds tool definitions** - Converts functions to Anthropic tool format
 
 ### Tool Execution Loop
@@ -242,7 +242,7 @@ ai-jup/
 │   ├── index.ts                # Extension entry point
 │   ├── promptCell.ts           # Prompt cell management
 │   ├── kernelConnector.ts      # Kernel introspection
-│   ├── promptParser.ts         # $variable and &function parsing
+│   ├── promptParser.ts         # $`variable` and &`function` parsing
 │   ├── toolResultRenderer.ts   # Tool result formatting
 │   └── *.test.ts               # Jest tests
 ├── ai_jup/                     # Python backend
@@ -265,13 +265,13 @@ ai-jup/
 
 | Feature | Solveit | ai-jup |
 |---------|---------|--------|
-| Variable syntax | `` $`varname` `` | `$varname` |
-| Function syntax | `` &`funcname` `` | `&funcname` |
+| Variable syntax | `` $`varname` `` | `` $`varname` `` |
+| Function syntax | `` &`funcname` `` | `` &`funcname` `` |
 | Platform | VS Code | JupyterLab |
 | API | Multiple providers | Anthropic Claude |
 | File tools | Built-in | fastcore.tools |
 
-ai-jup uses simplified syntax without backticks for easier typing.
+ai-jup uses the same syntax as Solveit for compatibility.
 
 ## Troubleshooting
 
@@ -311,7 +311,7 @@ Make sure you're in command mode (press `Esc` first), then try the shortcut. If 
 
 ### Tool execution fails
 
-Ensure the function is defined in the kernel before referencing it with `&`. Run the code cell that defines the function first, then execute the prompt cell.
+Ensure the function is defined in the kernel before referencing it with `` &`functionname` ``. Run the code cell that defines the function first, then execute the prompt cell.
 
 ## Requirements
 
