@@ -55,6 +55,10 @@ jupyter lab
 
 ### 4. Try it out
 
+Open [test_syntax.ipynb](test_syntax.ipynb) for a starter notebook demonstrating the `$`variable`` and `&`function`` syntax.
+
+Or create your own:
+
 1. Press `Cmd/Ctrl + Shift + P` to insert a prompt cell
 2. Type: `What is 2 + 2?`
 3. Press `Cmd/Ctrl + Shift + Enter` to execute
