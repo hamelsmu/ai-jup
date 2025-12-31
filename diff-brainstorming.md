@@ -686,13 +686,13 @@ function onCellChanged(cell: ICellModel) {
 
 1. **Multi-notebook context**: Not needed for v1 (single notebook only)
 2. **Collaborative editing**: Not supported for v1 (single user)
+3. **Cell metadata**: Yes, expose to AI (enables editing tags, slide types, etc.)
 
 ## Open Questions
 
 1. ~~**Undo support**: Should accepting changes be undoable?~~ ✅ Designed above
 2. **Conflict resolution**: What if user edits a cell while a patch is pending?
 3. **Output cells**: Should AI be able to propose clearing/modifying outputs?
-4. **Metadata**: Should we expose cell metadata to the AI?
 
 ---
 
