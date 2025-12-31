@@ -25,7 +25,9 @@ jobs:
           cache: "yarn"
 
       - name: Install Python dependencies
-        run: pip install -e ".[test]"
+        run: |
+          pip install jupyterlab>=4.0.0
+          pip install -e ".[test]"
 
       - name: Install Node dependencies
         run: yarn install --immutable
