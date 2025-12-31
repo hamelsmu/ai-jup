@@ -101,7 +101,63 @@ def test_build_tools():
     print("✓ Tool building works")
 
 
+def test_build_messages():
+    """Test the conversation history message building logic."""
+    from ai_jup.handlers import PromptHandler
+    
+    class MockHandler:
+        pass
+    
+    handler = MockHandler()
+    handler._build_messages = PromptHandler._build_messages.__get__(handler, MockHandler)
+    
+    # Test with empty history
+    messages = handler._build_messages([], "Hello")
+    assert len(messages) == 1
+    assert messages[0] == {"role": "user", "content": "Hello"}
+    print("✓ Empty conversation history works")
+    
+    # Test with single turn history
+    history = [{"prompt": "Write a poem", "response": "Roses are red..."}]
+    messages = handler._build_messages(history, "Continue the poem")
+    assert len(messages) == 3
+    assert messages[0] == {"role": "user", "content": "Write a poem"}
+    assert messages[1] == {"role": "assistant", "content": "Roses are red..."}
+    assert messages[2] == {"role": "user", "content": "Continue the poem"}
+    print("✓ Single turn conversation history works")
+    
+    # Test with multiple turn history
+    history = [
+        {"prompt": "Hello", "response": "Hi there!"},
+        {"prompt": "How are you?", "response": "I'm doing well, thanks!"}
+    ]
+    messages = handler._build_messages(history, "That's great")
+    assert len(messages) == 5
+    assert messages[0]["role"] == "user"
+    assert messages[1]["role"] == "assistant"
+    assert messages[2]["role"] == "user"
+    assert messages[3]["role"] == "assistant"
+    assert messages[4] == {"role": "user", "content": "That's great"}
+    print("✓ Multiple turn conversation history works")
+    
+    # Test with empty prompt/response in history (should skip empty)
+    history = [{"prompt": "", "response": ""}]
+    messages = handler._build_messages(history, "Hello")
+    assert len(messages) == 1
+    assert messages[0] == {"role": "user", "content": "Hello"}
+    print("✓ Empty turns are skipped")
+    
+    # Test with partial turn (only prompt)
+    history = [{"prompt": "Test", "response": ""}]
+    messages = handler._build_messages(history, "Next")
+    assert len(messages) == 2
+    assert messages[0] == {"role": "user", "content": "Test"}
+    assert messages[1] == {"role": "user", "content": "Next"}
+    print("✓ Partial turns (prompt only) work")
+
+
 if __name__ == '__main__':
     test_build_system_prompt()
     test_build_tools()
+    test_build_messages()
     print("\n✅ All handler tests passed!")

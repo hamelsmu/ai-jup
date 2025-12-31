@@ -125,6 +125,7 @@ class PromptHandler(APIHandler):
             preceding_code = context.get("preceding_code", "")
             images = context.get("images", [])  # Multimodal image context
             chart_specs = context.get("chartSpecs", [])  # Declarative viz specs
+            conversation_history = context.get("conversationHistory", [])  # Previous turns
             model = data.get("model", "claude-sonnet-4-20250514")
             kernel_id = data.get("kernel_id")  # For server-side tool execution
             max_steps = int(data.get("max_steps", 1))  # Max tool loop iterations
@@ -157,7 +158,7 @@ class PromptHandler(APIHandler):
                 if kernel_manager:
                     kernel = kernel_manager.get_kernel(kernel_id)
             
-            messages = [{"role": "user", "content": prompt}]
+            messages = self._build_messages(conversation_history, prompt)
             steps = 0
             
             while True:
@@ -558,6 +559,29 @@ class PromptHandler(APIHandler):
             })
         
         return blocks
+
+    def _build_messages(self, conversation_history: list, current_prompt: str) -> list:
+        """Build the messages array including conversation history.
+        
+        Args:
+            conversation_history: List of {"prompt": str, "response": str} turns
+            current_prompt: The current user prompt
+            
+        Returns:
+            List of message dicts with alternating user/assistant roles
+        """
+        messages = []
+        
+        for turn in conversation_history:
+            prompt = turn.get("prompt", "")
+            response = turn.get("response", "")
+            if prompt:
+                messages.append({"role": "user", "content": prompt})
+            if response:
+                messages.append({"role": "assistant", "content": response})
+        
+        messages.append({"role": "user", "content": current_prompt})
+        return messages
 
     def _build_tools(self, functions: dict) -> list:
         """Build Anthropic tool definitions from function info."""

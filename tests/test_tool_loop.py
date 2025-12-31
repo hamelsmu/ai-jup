@@ -124,6 +124,7 @@ def handler():
     h = MockHandler()
     h._build_system_prompt = PromptHandler._build_system_prompt.__get__(h, MockHandler)
     h._build_tools = PromptHandler._build_tools.__get__(h, MockHandler)
+    h._build_messages = PromptHandler._build_messages.__get__(h, MockHandler)
     h._python_type_to_json_schema = PromptHandler._python_type_to_json_schema.__get__(h, MockHandler)
     h._write_sse = PromptHandler._write_sse.__get__(h, MockHandler)
     # Note: _execute_tool_in_kernel must be patched per-test since we bind the real post method

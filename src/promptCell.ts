@@ -14,7 +14,8 @@ import type {
   IFunctionInfo,
   IExtensionSettings,
   IImageContext,
-  IChartSpec
+  IChartSpec,
+  IConversationTurn
 } from './tokens';
 import { parsePrompt, processPrompt } from './promptParser';
 import { PromptModel } from './promptModel';
@@ -32,7 +33,8 @@ const PROMPT_OUTPUT_CLASS = 'ai-jup-prompt-output';
 const PROMPT_METADATA_KEY = 'ai_jup';
 
 interface PromptMetadata {
-  isPromptCell: boolean;
+  isPromptCell?: boolean;
+  isOutputCell?: boolean;
   model?: string;
 }
 
@@ -60,7 +62,7 @@ export class PromptCellManager implements IPromptCellManager {
 
     const notebook = panel.content;
     
-    // Style all prompt cells - works with JupyterLab 4 windowing
+    // Style all prompt and output cells - works with JupyterLab 4 windowing
     const stylePromptCells = () => {
       if (panel.isDisposed || !notebook.model) {
         return;
@@ -69,10 +71,27 @@ export class PromptCellManager implements IPromptCellManager {
       
       for (let i = 0; i < cellCount; i++) {
         const cellModel = notebook.model.cells.get(i);
+        const cell = notebook.widgets[i];
+        if (!cell) {
+          continue;
+        }
+        
         if (this._isPromptCellModel(cellModel)) {
-          const cell = notebook.widgets[i];
-          if (cell && !cell.hasClass(PROMPT_CELL_CLASS)) {
+          if (!cell.hasClass(PROMPT_CELL_CLASS)) {
             cell.addClass(PROMPT_CELL_CLASS);
+          }
+        }
+        
+        if (this._isOutputCellModel(cellModel)) {
+          if (!cell.hasClass(PROMPT_OUTPUT_CLASS)) {
+            cell.addClass(PROMPT_OUTPUT_CLASS);
+          }
+          // Restore "Convert to Cells" button if settings allow
+          if (this._settings?.showConvertButton !== false) {
+            const content = cellModel.getMetadata('ai_jup_content') as string | undefined;
+            if (content && cell.model.type === 'markdown') {
+              this._addConvertButton(panel, cell as MarkdownCell, content);
+            }
           }
         }
       }
@@ -254,13 +273,76 @@ export class PromptCellManager implements IPromptCellManager {
       }
     }
 
+    const conversationHistory = this._gatherConversationHistory(panel, activeIndex);
+
     return {
       preceding_code: precedingCode.join('\n\n'),
       variables,
       functions,
       images: images.length > 0 ? images : undefined,
-      chartSpecs: chartSpecs.length > 0 ? chartSpecs : undefined
+      chartSpecs: chartSpecs.length > 0 ? chartSpecs : undefined,
+      conversationHistory:
+        conversationHistory.length > 0 ? conversationHistory : undefined
     };
+  }
+
+  /**
+   * Gather conversation history from previous prompt/response cell pairs.
+   * Looks for cells with PROMPT_CELL_CLASS followed by PROMPT_OUTPUT_CLASS.
+   */
+  private _gatherConversationHistory(
+    panel: NotebookPanel,
+    activeIndex: number
+  ): IConversationTurn[] {
+    const notebook = panel.content;
+    const model = notebook.model;
+    const history: IConversationTurn[] = [];
+
+    if (!model) {
+      return history;
+    }
+
+    let i = 0;
+    while (i < activeIndex) {
+      const cellModel = model.cells.get(i);
+      if (!cellModel) {
+        i++;
+        continue;
+      }
+
+      const cellWidget = notebook.widgets[i];
+      if (!cellWidget) {
+        i++;
+        continue;
+      }
+
+      if (cellWidget.hasClass(PROMPT_CELL_CLASS)) {
+        const promptText = cellModel.sharedModel.getSource();
+
+        const nextIndex = i + 1;
+        if (nextIndex < activeIndex) {
+          const nextWidget = notebook.widgets[nextIndex];
+          const nextModel = model.cells.get(nextIndex);
+
+          if (
+            nextWidget &&
+            nextModel &&
+            nextWidget.hasClass(PROMPT_OUTPUT_CLASS)
+          ) {
+            const responseText = nextModel.sharedModel.getSource();
+            history.push({
+              prompt: promptText,
+              response: responseText
+            });
+            i = nextIndex + 1;
+            continue;
+          }
+        }
+      }
+      i++;
+    }
+
+    return history;
   }
 
   /**
@@ -415,6 +497,9 @@ export class PromptCellManager implements IPromptCellManager {
 
     const newOutputCell = notebook.widgets[outputIndex];
     newOutputCell.addClass(PROMPT_OUTPUT_CLASS);
+    
+    // Mark as output cell in metadata for persistence across reload
+    newOutputCell.model.setMetadata(PROMPT_METADATA_KEY, { isOutputCell: true });
 
     return newOutputCell;
   }
@@ -494,6 +579,14 @@ export class PromptCellManager implements IPromptCellManager {
   private _isPromptCellModel(model: ICellModel): boolean {
     const metadata = model.getMetadata(PROMPT_METADATA_KEY) as PromptMetadata | undefined;
     return metadata?.isPromptCell === true;
+  }
+
+  /**
+   * Check if a cell model is an AI output cell.
+   */
+  private _isOutputCellModel(model: ICellModel): boolean {
+    const metadata = model.getMetadata(PROMPT_METADATA_KEY) as PromptMetadata | undefined;
+    return metadata?.isOutputCell === true;
   }
 
   /**

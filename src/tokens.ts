@@ -139,6 +139,16 @@ export interface IChartSpec {
 }
 
 /**
+ * A single turn in the conversation history.
+ */
+export interface IConversationTurn {
+  /** The user's prompt text */
+  prompt: string;
+  /** The AI's response text */
+  response: string;
+}
+
+/**
  * Prompt execution context containing gathered information.
  */
 export interface IPromptContext {
@@ -149,6 +159,8 @@ export interface IPromptContext {
   images?: IImageContext[];
   /** Chart specs from preceding cells (Vega-Lite, Plotly) */
   chartSpecs?: IChartSpec[];
+  /** Previous prompt/response pairs for conversation continuity */
+  conversationHistory?: IConversationTurn[];
 }
 
 /**
