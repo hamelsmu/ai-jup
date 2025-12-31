@@ -84,10 +84,17 @@ export class PromptModel implements IPromptModel {
     };
 
     try {
+      const xsrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('_xsrf='))
+        ?.split('=')[1];
+
       const response = await fetch(`${baseUrl}ai-jup/prompt`, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(xsrfToken && { 'X-XSRFToken': xsrfToken })
         },
         body: JSON.stringify(body),
         signal: this._abortController.signal
