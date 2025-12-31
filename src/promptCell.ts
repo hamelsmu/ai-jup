@@ -66,19 +66,13 @@ export class PromptCellManager implements IPromptCellManager {
         return;
       }
       const cellCount = notebook.model.cells.length;
-      console.log(`[ai-jup] Styling prompt cells, ${cellCount} cells in model, ${notebook.widgets.length} widgets`);
       
       for (let i = 0; i < cellCount; i++) {
         const cellModel = notebook.model.cells.get(i);
         if (this._isPromptCellModel(cellModel)) {
-          console.log(`[ai-jup] Found prompt cell at index ${i}`);
-          // Widget may not exist yet due to windowing, check bounds
-          if (i < notebook.widgets.length) {
-            const cell = notebook.widgets[i];
-            if (cell && !cell.hasClass(PROMPT_CELL_CLASS)) {
-              cell.addClass(PROMPT_CELL_CLASS);
-              console.log(`[ai-jup] Added class to cell ${i}`);
-            }
+          const cell = notebook.widgets[i];
+          if (cell && !cell.hasClass(PROMPT_CELL_CLASS)) {
+            cell.addClass(PROMPT_CELL_CLASS);
           }
         }
       }
@@ -212,6 +206,7 @@ export class PromptCellManager implements IPromptCellManager {
     parsed: ReturnType<typeof parsePrompt>
   ): Promise<IPromptContext> {
     const notebook = panel.content;
+    const model = notebook.model;
     const activeIndex = notebook.activeCellIndex;
 
     // Get preceding code cells and extract images/chart specs from outputs
@@ -219,20 +214,25 @@ export class PromptCellManager implements IPromptCellManager {
     const images: IImageContext[] = [];
     const chartSpecs: IChartSpec[] = [];
 
-    for (let i = 0; i < activeIndex; i++) {
-      const cell = notebook.widgets[i];
-      const cellModel = cell.model;
-
-      if (cellModel.type === 'code') {
-        precedingCode.push(cellModel.sharedModel.getSource());
-        // Extract images and chart specs from code cell outputs
-        if (isCodeCellModel(cellModel)) {
-          this._extractImagesFromCodeCell(cellModel, i, images);
-          this._extractChartSpecsFromCodeCell(cellModel, i, chartSpecs);
+    // Iterate over the model (not widgets) for robustness under windowing
+    if (model) {
+      for (let i = 0; i < activeIndex; i++) {
+        const cellModel = model.cells.get(i);
+        if (!cellModel) {
+          continue;
         }
-      } else if (cellModel.type === 'markdown') {
-        // Extract images from markdown cell attachments
-        this._extractImagesFromMarkdownCell(cellModel, i, images);
+
+        if (cellModel.type === 'code') {
+          precedingCode.push(cellModel.sharedModel.getSource());
+          // Extract images and chart specs from code cell outputs
+          if (isCodeCellModel(cellModel)) {
+            this._extractImagesFromCodeCell(cellModel, i, images);
+            this._extractChartSpecsFromCodeCell(cellModel, i, chartSpecs);
+          }
+        } else if (cellModel.type === 'markdown') {
+          // Extract images from markdown cell attachments
+          this._extractImagesFromMarkdownCell(cellModel, i, images);
+        }
       }
     }
 

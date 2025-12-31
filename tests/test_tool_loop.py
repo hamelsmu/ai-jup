@@ -42,17 +42,24 @@ class MockEvent:
 
 
 class MockStreamContext:
-    """Mock context manager for Anthropic streaming."""
+    """Mock async context manager for Anthropic streaming."""
 
     def __init__(self, events):
         self.events = events
 
-    def __enter__(self):
-        return iter(self.events)
+    async def __aenter__(self):
+        return self
 
-    def __exit__(self, *args):
+    async def __aexit__(self, *args):
         pass
 
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if not self.events:
+            raise StopAsyncIteration
+        return self.events.pop(0)
 
 class MockRequest:
     """Mock tornado request."""
@@ -163,7 +170,7 @@ class TestUnknownToolRejected:
             patch("ai_jup.handlers.anthropic") as mock_anthropic,
             patch("ai_jup.handlers.PromptHandler._execute_tool_in_kernel", mock_execute_tool),
         ):
-            mock_anthropic.Anthropic.return_value = mock_client
+            mock_anthropic.AsyncAnthropic.return_value = mock_client
             mock_anthropic.NOT_GIVEN = object()
             await handler.post()
 
@@ -212,7 +219,7 @@ class TestInvalidToolInputJSON:
             patch("ai_jup.handlers.anthropic") as mock_anthropic,
             patch("ai_jup.handlers.PromptHandler._execute_tool_in_kernel", mock_execute_tool),
         ):
-            mock_anthropic.Anthropic.return_value = mock_client
+            mock_anthropic.AsyncAnthropic.return_value = mock_client
             mock_anthropic.NOT_GIVEN = object()
             await handler.post()
 
@@ -263,7 +270,7 @@ class TestInvalidToolArgumentName:
             patch("ai_jup.handlers.anthropic") as mock_anthropic,
             patch("ai_jup.handlers.PromptHandler._execute_tool_in_kernel", mock_execute_tool),
         ):
-            mock_anthropic.Anthropic.return_value = mock_client
+            mock_anthropic.AsyncAnthropic.return_value = mock_client
             mock_anthropic.NOT_GIVEN = object()
             await handler.post()
 
