@@ -2,6 +2,7 @@
 
 A JupyterLab extension that adds AI-powered prompt cells with special syntax for referencing kernel variables and exposing functions as AI-callable tools. Inspired by [fast.ai's Solveit](https://www.fast.ai/posts/2025-11-07-solveit-features.html).
 
+[![CI](https://github.com/hamelsmu/ai-jup/actions/workflows/ci.yml/badge.svg)](https://github.com/hamelsmu/ai-jup/actions/workflows/ci.yml)
 ![JupyterLab 4.x](https://img.shields.io/badge/JupyterLab-4.x-blue)
 ![Python 3.8+](https://img.shields.io/badge/Python-3.8+-green)
 ![License MIT](https://img.shields.io/badge/License-MIT-yellow)
